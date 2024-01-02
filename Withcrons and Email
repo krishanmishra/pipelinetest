@@ -1,0 +1,74 @@
+pipeline {
+    
+    agent any
+    
+    extendedChoice(
+            name: 'TestCases',
+            type: 'PT_MULTI_SELECT',
+            value: 'Test1,Test2,Test3,Test4,Test5,Test6',
+            defaultValue: 'Test2,Test3',
+            description: 'Please select Tests you want to run',
+            visibleItemCount: 3,
+            multiSelectDelimiter: ',',
+            quoteValue: false,
+            
+        )
+    
+    parameters{
+        choice(name: 'ENVIRONMENT', choices:['QA','INT','DEMO'], description: 'select the deployment environment')
+        choice(name: 'PLATFORM', choices:['LINUX','WINDOW','MAC'], description: 'select the platform')
+        choice(name: 'BROWSER', choices:['CHROME','FF','EDGE'], description: 'select the browser for running')
+    }
+     triggers {
+            cron('H 4 * * 1-5') // Schedule: every weekday at 4 AM
+        }
+
+    stages {
+    
+       stage('testing') {
+            steps {
+                echo "Tests will run ----${params.TestCases}"
+            }
+        }
+        stage('Build') {
+            steps {
+                echo "Creating Build for ${params.ENVIRONMENT} on ${params.PLATFORM} platform"
+                sleep time:10, unit: 'SECONDS'
+            }
+        }
+        stage('Run Automation') {
+            steps {
+                echo "Running automation on ${params.BROWSER} browser"
+                sleep time:10, unit: 'SECONDS'
+            }
+        }
+            
+       stage('Deploy') {
+            steps {
+                echo "Deploying on ${params.ENVIRONMENT} server"
+                sleep time:10, unit: 'SECONDS'
+            }
+        }
+    }
+    
+    post{
+        success{
+            echo "Pipeline completed successfully"
+        }
+        failure{
+            echo "Pipeline failed"
+        }
+    }
+    
+    post {
+ always {
+ // Your post-build actions go here
+ emailext(
+ subject: 'Build Status - ${currentBuild.currentResult}',
+ body: 'The build status is: ${currentBuild.currentResult}',
+ to: 'your-email@example.com',
+ attachLog: true
+ )
+ }
+ }
+      
